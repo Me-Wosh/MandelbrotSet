@@ -1,32 +1,47 @@
-#include <vector>
+#include <iostream>
+#include <string>
 #include "raylib.h"
-#include "raymath.h"
+#include "cartesian.hpp"
+#include "mandelbrot.hpp"
 #include "constants.cpp"
-#include "screen.cpp"
-#include "mandelbrot.cpp"
-#include "cartesian.cpp"
 
 int main()
 {
+    const auto stopwatchStart = std::chrono::high_resolution_clock::now();
+
     int scale = 190;
     Vector2 mouseCartesianPosition;
-    std::vector<Vector2> linePositions;
+    std::vector<Vector2> stablePositions = Mandelbrot::GetStablePositions(SCREEN_WIDTH, SCREEN_HEIGHT, scale);
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Mandelbrot set");
+    SetMouseCursor(MOUSE_CURSOR_CROSSHAIR);
+
+    const auto stopwatchEnd = std::chrono::high_resolution_clock::now();
+    const auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(stopwatchEnd - stopwatchStart);
+    printf("Started in: %lld milliseconds", milliseconds.count());
 
     while (!WindowShouldClose())
     {
+        mouseCartesianPosition = Cartesian::GetPosition(GetMousePosition(), scale);
+
+        if (IsMouseButtonUp(MOUSE_LEFT_BUTTON))
+        {
+            ShowCursor();
+        }
+
         BeginDrawing();
 
             ClearBackground(WHITE);
-            mouseCartesianPosition = Cartesian::GetPosition(GetMousePosition(), scale);
+
+            Mandelbrot::DrawSetBoundaries(&stablePositions);
 
             Cartesian::DrawPlane(scale);
             Cartesian::DrawCoordinates(mouseCartesianPosition);
 
             if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
             {
-                DrawMandelbrotIterations(Mandelbrot::GetIterations(mouseCartesianPosition), scale);
+                HideCursor();
+                Mandelbrot::DrawIterations(Mandelbrot::GetIterations(mouseCartesianPosition), scale);
             }
 
         EndDrawing();
